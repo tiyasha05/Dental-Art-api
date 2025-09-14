@@ -12,8 +12,9 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 const allowedOrigins = [
-  "https://dentalartdelhi.com", // ✅ Production
-  "http://localhost:5173",      // ✅ Local Dev
+  "https://dentalartdelhi.com",   // ✅ Production
+  "https://www.dentalartdelhi.com", // ✅ Add this too
+  "http://localhost:5173",       // ✅ Local Devv
 ];
 
 // For ES module __dirname
@@ -79,7 +80,7 @@ app.post("/api/appointment", async (req, res) => {
 
     // Send with Resend
     await resend.emails.send({
-      from: "Dental Art <onboarding@resend.dev>", // 👈 replace with verified sender
+      from: "Appointments <appointments@dentalartdelhi.com>",// 👈 replace with verified sender
       to: "drtarakhilnanidentalart@gmail.com",
       subject: "🦷 New Appointment Booking",
       html: `
@@ -119,7 +120,7 @@ app.post("/api/contact", async (req, res) => {
 
   try {
     await resend.emails.send({
-      from: "Dental Art <onboarding@resend.dev>", // 👈 replace with verified sender
+      from: "Contacts <info@dentalartdelhi.com>", // 👈 replace with verified sender
       to: "drtarakhilnanidentalart@gmail.com",
       subject: "📬 New Contact Form Submission",
       html: `
