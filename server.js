@@ -100,7 +100,7 @@ app.post("/api/appointment", async (req, res) => {
 
     await transporter.sendMail({
       from: `"Dental Art Booking" <${process.env.EMAIL_USER}>`,
-      to: "drtarakhilnani@gmail.com",
+      to: "drtarakhilnanidentalart@gmail.com",
       subject: "New Appointment Booking",
       html: `
         <h2>New Appointment</h2>
