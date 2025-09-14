@@ -2,10 +2,10 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import nodemailer from "nodemailer";
 import ExcelJS from "exceljs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { Resend } from "resend";
 
 dotenv.config();
 const app = express();
@@ -36,6 +36,9 @@ app.use(
 app.use(bodyParser.json());
 console.log("✅ Middleware initialized");
 
+// ✅ Resend client
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 /* =========================
    📌 Appointment API
 ========================= */
@@ -46,23 +49,13 @@ app.post("/api/appointment", async (req, res) => {
   const { name, phone, treatment, doctor, date, timeHour, timePeriod } = req.body;
 
   if (!name || !phone || !treatment || !doctor || !date || !timeHour || !timePeriod) {
-    console.warn("⚠️ Missing fields:", {
-      name,
-      phone,
-      treatment,
-      doctor,
-      date,
-      timeHour,
-      timePeriod,
-    });
     return res.status(400).json({ success: false, message: "All fields are required" });
   }
 
   try {
-    console.log("📄 Creating Excel file...");
+    // Excel file
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Appointments");
-
     sheet.columns = [
       { header: "Name", key: "name" },
       { header: "Phone", key: "phone" },
@@ -72,7 +65,6 @@ app.post("/api/appointment", async (req, res) => {
       { header: "Time", key: "time" },
       { header: "Submitted At", key: "submittedAt" },
     ];
-
     sheet.addRow({
       name,
       phone,
@@ -82,26 +74,14 @@ app.post("/api/appointment", async (req, res) => {
       time: `${timeHour} ${timePeriod}`,
       submittedAt: new Date().toLocaleString(),
     });
-
     const buffer = await workbook.xlsx.writeBuffer();
     console.log("✅ Excel file created");
 
-    // 📧 Send Email
-    console.log("📧 Sending email to:", process.env.EMAIL_USER);
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      // port: 465,
-      // secure: true, // SSL
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: `"Dental Art Booking" <${process.env.EMAIL_USER}>`,
+    // Send with Resend
+    await resend.emails.send({
+      from: "Dental Art <onboarding@resend.dev>", // 👈 replace with verified sender
       to: "drtarakhilnanidentalart@gmail.com",
-      subject: "New Appointment Booking",
+      subject: "🦷 New Appointment Booking",
       html: `
         <h2>New Appointment</h2>
         <p><strong>Name:</strong> ${name}</p>
@@ -114,17 +94,16 @@ app.post("/api/appointment", async (req, res) => {
       attachments: [
         {
           filename: "appointment.xlsx",
-          content: Buffer.from(buffer),
+          content: buffer.toString("base64"), // must be base64 for Resend
         },
       ],
     });
 
-    console.log("✅ Appointment email sent successfully");
+    console.log("✅ Appointment email sent via Resend");
     res.json({ success: true });
-
   } catch (error) {
     console.error("❌ Error sending appointment:", error);
-    res.status(500).json({ success: false, message: error.message || "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
@@ -139,18 +118,8 @@ app.post("/api/contact", async (req, res) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      // port: 465,
-      // secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: `"Dental Art Contact" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: "Dental Art <onboarding@resend.dev>", // 👈 replace with verified sender
       to: "drtarakhilnanidentalart@gmail.com",
       subject: "📬 New Contact Form Submission",
       html: `
@@ -162,11 +131,11 @@ app.post("/api/contact", async (req, res) => {
       `,
     });
 
-    console.log(`✅ Contact form email sent from ${name}`);
+    console.log(`✅ Contact form email sent via Resend from ${name}`);
     res.json({ success: true });
   } catch (error) {
     console.error("❌ Email sending error:", error);
-    res.status(500).json({ success: false, message: error.message || "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
@@ -178,7 +147,6 @@ console.log("📦 Serving static frontend from:", clientPath);
 app.use(express.static(clientPath));
 
 app.get("/*", (req, res) => {
-  console.log("🌍 Frontend route hit:", req.url);
   res.sendFile(path.join(clientPath, "index.html"));
 });
 
