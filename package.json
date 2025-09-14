@@ -1,6 +1,7 @@
 {
   "name": "dental_art",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "vite",
@@ -18,7 +19,6 @@
     "express": "^4.21.2",
     "framer-motion": "^12.23.3",
     "lucide-react": "^0.515.0",
-    "nodemailer": "^6.10.1",
     "react": "^18.0.0",
     "react-countup": "^6.5.3",
     "react-dom": "^18.0.0",
